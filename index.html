@@ -1,1 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antrenman Programı</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #1a1a1c;
+    --surface2: #242426;
+    --border: #2e2e32;
+    --accent: #d4ff5a;
+    --accent2: #ff6b35;
+    --accent3: #5ab4ff;
+    --text: #f0f0ee;
+    --text-muted: #7a7a80;
+    --text-dim: #4a4a50;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  header { padding: 48px 32px 32px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,255,90,0.07) 0%, transparent 70%); pointer-events: none; }
+  .header-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px, 8vw, 72px); line-height: 1; letter-spacing: 0.02em; color: var(--text); }
+  h1 span { color: var(--accent); }
+  .header-sub { color: var(--text-muted); font-size: 14px; font-weight: 300; margin-top: 4px; }
+  .day-nav { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); padding: 0 24px; }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-btn { background: none; border: none; padding: 18px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-muted); white-space: nowrap; position: relative; transition: color 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .day-btn .day-letter { font-family: 'Bebas Neue', sans-serif; font-size: 22px; line-height: 1; letter-spacing: 0.05em; }
+  .day-btn .day-type { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .day-btn::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--accent); transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .day-btn.active { color: var(--text); }
+  .day-btn.active::after { width: calc(100% - 24px); }
+  .day-btn.rest { color: var(--text-dim); }
+  .day-btn.rest.active { color: var(--text-muted); }
+  main { padding: 32px 24px; max-width: 760px; margin: 0 auto; }
+  .day-view { display: none; }
+  .day-view.active { display: block; animation: fadeUp 0.35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .day-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; }
+  .day-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 0.03em; line-height: 1; }
+  .day-badge { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; font-weight: 600; }
+  .badge-upper { background: rgba(212,255,90,0.12); color: var(--accent); }
+  .badge-lower { background: rgba(90,180,255,0.12); color: var(--accent3); }
+  .badge-rest { background: rgba(255,107,53,0.12); color: var(--accent2); }
+  .badge-full { background: rgba(212,255,90,0.08); color: #b8d94e; border: 1px solid rgba(212,255,90,0.2); }
+  .exercise-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; transition: border-color 0.2s; }
+  .exercise-card:hover { border-color: #3e3e44; }
+  .exercise-header { padding: 18px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; user-select: none; }
+  .ex-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--text-dim); line-height: 1; min-width: 28px; }
+  .ex-info { flex: 1; }
+  .ex-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .ex-meta { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+  .ex-sets { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); letter-spacing: 0.05em; }
+  .ex-chevron { color: var(--text-dim); font-size: 16px; transition: transform 0.3s ease; margin-left: 8px; }
+  .exercise-card.open .ex-chevron { transform: rotate(180deg); }
+  .exercise-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .exercise-card.open .exercise-body { max-height: 500px; }
+  .exercise-detail { padding: 0 20px 20px 64px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .detail-tag { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent2); background: rgba(255,107,53,0.08); padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; }
+  .detail-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .detail-list li { font-size: 13px; color: var(--text-muted); font-weight: 300; padding-left: 14px; position: relative; line-height: 1.5; }
+  .detail-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-size: 11px; }
+  .detail-list li.note { color: var(--text-dim); font-style: italic; font-size: 12px; }
+  .superset-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent3); background: rgba(90,180,255,0.08); padding: 4px 10px; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 2px; }
+  .section-divider { display: flex; align-items: center; gap: 12px; margin: 28px 0 16px; }
+  .section-divider span { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; }
+  .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .simple-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; }
+  .simple-card .ex-num { color: var(--text-dim); }
+  .rest-block { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; margin-bottom: 16px; }
+  .rest-block h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.05em; margin-bottom: 14px; color: var(--text-muted); }
+  .rest-block ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .rest-block ul li { font-size: 14px; color: var(--text-muted); font-weight: 300; padding-left: 18px; position: relative; }
+  .rest-block ul li::before { content: '·'; position: absolute; left: 0; color: var(--accent); font-size: 18px; line-height: 1; top: 2px; }
+  .rest-note { margin-top: 20px; padding: 14px 16px; background: rgba(212,255,90,0.05); border-left: 2px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 13px; color: var(--text-muted); font-style: italic; line-height: 1.6; }
+  .circuit-block { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+  .circuit-header { padding: 14px 20px; background: var(--surface2); display: flex; align-items: center; gap: 10px; }
+  .circuit-header h3 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.05em; color: var(--text); }
+  .circuit-header .rounds { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-left: auto; }
+  .circuit-items { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .circuit-item { display: flex; align-items: center; gap: 12px; }
+  .circuit-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .circuit-item-text { font-size: 14px; color: var(--text); font-weight: 400; }
+  .circuit-item-reps { margin-left: auto; font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--accent); letter-spacing: 0.05em; }
+  .circuit-rest { margin: 0 20px 16px; font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  .circuit-rest::before { content: '⏱'; font-size: 11px; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); letter-spacing: 0.05em; line-height: 1; }
+  .stat-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-top: 4px; font-weight: 500; }
+  @media (max-width: 480px) { header { padding: 32px 20px 24px; } main { padding: 24px 16px; } .day-nav { padding: 0 12px; } .exercise-detail { padding-left: 20px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-label">Haftalık Plan</div>
+  <h1>ANTRENMAN<br><span>PROGRAMI</span></h1>
+  <div class="header-sub">TRX · Dambıl · Vücut ağırlığı — 6 günlük split</div>
+</header>
+<nav class="day-nav">
+  <button class="day-btn active" onclick="showDay('pzt',this)"><span class="day-letter">Pzt</span><span class="day-type">Üst A</span></button>
+  <button class="day-btn" onclick="showDay('sal',this)"><span class="day-letter">Sal</span><span class="day-type">Alt A</span></button>
+  <button class="day-btn rest" onclick="showDay('car',this)"><span class="day-letter">Çar</span><span class="day-type">Topar.</span></button>
+  <button class="day-btn" onclick="showDay('per',this)"><span class="day-letter">Per</span><span class="day-type">Üst B</span></button>
+  <button class="day-btn" onclick="showDay('cum',this)"><span class="day-letter">Cum</span><span class="day-type">Alt B</span></button>
+  <button class="day-btn" onclick="showDay('cmt',this)"><span class="day-letter">Cmt</span><span class="day-type">Full</span></button>
+</nav>
+<main>
+  <div class="day-view active" id="day-pzt">
+    <div class="day-header"><div class="day-title">PAZARTESİ</div><span class="day-badge badge-upper">Üst Vücut A</span></div>
+    <div class="stats-row"><div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Egzersiz</div></div><div class="stat-box"><div class="stat-val">18</div><div class="stat-label">Set</div></div><div class="stat-box"><div class="stat-val">+Core</div><div class="stat-label">Finisher</div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">01</div><div class="ex-info"><div class="ex-name">TRX Row</div><div class="ex-meta">Sırt</div></div><div class="ex-sets">3×10-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Mechanical Drop</span><ul class="detail-list"><li>Ayaklar daha önde, zor açıyla → 8-10 tekrar</li><li>Ayağını biraz geri al → 6-8 tekrar daha</li><li>Üstte 15 saniye sıkıştırma</li></ul></div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">02</div><div class="ex-info"><div class="ex-name">Şınav</div><div class="ex-meta">Gerekirse diz destekli</div></div><div class="ex-sets">3×8-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Drop</span><ul class="detail-list"><li>Normal şınav</li><li>Diz üstü şınava geç</li><li>Altta yarım tekrarlar</li></ul></div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">03</div><div class="ex-info"><div class="ex-name">Dambıl Shoulder Press</div><div class="ex-meta">Omuz</div></div><div class="ex-sets">3×10-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Combo Drop</span><ul class="detail-list"><li>Tam tekrar</li><li>Yarım tekrar</li><li>Üstte 10 sn bekleme</li></ul></div></div></div>
+    <div class="simple-card"><div class="ex-num">04</div><div class="ex-info"><div class="ex-name">TRX Face Pull</div><div class="ex-meta">Arka omuz + üst sırt</div></div><div class="ex-sets">3×12-15</div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">05</div><div class="ex-info"><div class="ex-name">Dambıl Lateral Raise</div><div class="ex-meta">Yan omuz</div></div><div class="ex-sets">3×12-20</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Drop</span><ul class="detail-list"><li>Normal tekrar</li><li>Hafif cheating'li 6-8 tekrar</li><li>Üstte 10 sn kısmi pulse</li></ul></div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">06</div><div class="ex-info"><div class="superset-label">Süperset</div><div class="ex-name">Curl + TRX Triceps Ext.</div><div class="ex-meta">Biceps + Triceps</div></div><div class="ex-sets">3 tur</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li>Dambıl Curl → 10-15 tekrar</li><li>TRX Triceps Extension → 10-15 tekrar</li></ul></div></div></div>
+    <div class="section-divider"><span>Core Finisher</span></div>
+    <div class="simple-card"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">Plank</div><div class="ex-meta">Core stabilite</div></div><div class="ex-sets">3×30-45sn</div></div>
+  </div>
+
+  <div class="day-view" id="day-sal">
+    <div class="day-header"><div class="day-title">SALI</div><span class="day-badge badge-lower">Alt Vücut + Core A</span></div>
+    <div class="stats-row"><div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Egzersiz</div></div><div class="stat-box"><div class="stat-val">19</div><div class="stat-label">Set</div></div><div class="stat-box"><div class="stat-val">+Core</div><div class="stat-label">Finisher</div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">01</div><div class="ex-info"><div class="ex-name">Goblet Squat</div><div class="ex-meta">Tek dambıl göğüste</div></div><div class="ex-sets">4×12-20</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Combo Drop</span><ul class="detail-list"><li>Tam squat</li><li>Yarım alt tekrar</li><li>Altta 20 sn bekleme</li></ul></div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">02</div><div class="ex-info"><div class="ex-name">Bulgarian Split Squat</div><div class="ex-meta">Her bacak ayrı</div></div><div class="ex-sets">3×10-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li class="note">⚡ Çok önemli hareket — tek taraflı olduğu için 8 kg hafif gelmez</li></ul></div></div></div>
+    <div class="simple-card"><div class="ex-num">03</div><div class="ex-info"><div class="ex-name">TRX Hamstring Curl</div><div class="ex-meta">Hamstring</div></div><div class="ex-sets">3×10-15</div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">04</div><div class="ex-info"><div class="ex-name">Dambıl Romanian Deadlift</div><div class="ex-meta">Hamstring + kalça</div></div><div class="ex-sets">3×12-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li>3 saniye yavaş iniş (eccentric)</li></ul></div></div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">05</div><div class="ex-info"><div class="ex-name">Glute Bridge</div><div class="ex-meta">Dambılı kalçada tut</div></div><div class="ex-sets">3×15-20</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li>Son tekrarda 15 sn sıkıştırma</li></ul></div></div></div>
+    <div class="simple-card"><div class="ex-num">06</div><div class="ex-info"><div class="ex-name">Standing Calf Raise</div><div class="ex-meta">Baldır</div></div><div class="ex-sets">4×20-25</div></div>
+    <div class="section-divider"><span>Core</span></div>
+    <div class="simple-card"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">Dead Bug</div></div><div class="ex-sets">3×10-12/t</div></div>
+    <div class="simple-card"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">Side Plank</div></div><div class="ex-sets">2-3×20-30sn/t</div></div>
+  </div>
+
+  <div class="day-view" id="day-car">
+    <div class="day-header"><div class="day-title">ÇARŞAMBA</div><span class="day-badge badge-rest">Aktif Toparlanma</span></div>
+    <div class="rest-block"><h3>SABAH</h3><ul><li>Yürüyüş / hafif koşu ✓</li></ul></div>
+    <div class="rest-block"><h3>AKŞAM · MOBİLİTE</h3><ul><li>15-20 dk mobilite çalışması</li><li>Hafif TRX esneme</li><li>Kalça açıcılar</li><li>Göğüs ve omuz açıcılar</li><li>Hamstring mobilitesi</li></ul></div>
+    <div class="rest-block"><h3>OPSİYONEL · ÇOK HAFİF</h3><ul><li>2 tur — Air squat x10</li><li>2 tur — Incline push-up x10</li><li>2 tur — TRX row x10</li><li>2 tur — Plank 20 sn</li></ul><div class="rest-note">Amaç egzersiz yapmak değil, kan dolaşımı. Kendini dövmeye gerek yok, dünya zaten bu işi yeterince yapıyor.</div></div>
+  </div>
+
+  <div class="day-view" id="day-per">
+    <div class="day-header"><div class="day-title">PERŞEMBE</div><span class="day-badge badge-upper">Üst Vücut B</span></div>
+    <div class="stats-row"><div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Egzersiz</div></div><div class="stat-box"><div class="stat-val">18</div><div class="stat-label">Set</div></div><div class="stat-box"><div class="stat-val">+Hold</div><div class="stat-label">Finisher</div></div></div>
+    <div class="simple-card"><div class="ex-num">01</div><div class="ex-info"><div class="ex-name">Tek Kol Dambıl Row</div><div class="ex-meta">Her kol</div></div><div class="ex-sets">4×10-15</div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">02</div><div class="ex-info"><div class="ex-name">TRX Chest Press</div><div class="ex-meta">Göğüs</div></div><div class="ex-sets">3×10-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><span class="detail-tag">Son Set · Mechanical Drop</span><ul class="detail-list"><li>Açıyla oynayarak mechanical drop set</li></ul></div></div></div>
+    <div class="simple-card"><div class="ex-num">03</div><div class="ex-info"><div class="ex-name">Arnold Press / Omuz Press</div><div class="ex-meta">Omuz</div></div><div class="ex-sets">3×10-15</div></div>
+    <div class="simple-card"><div class="ex-num">04</div><div class="ex-info"><div class="ex-name">TRX Rear Delt Fly</div><div class="ex-meta">Arka omuz</div></div><div class="ex-sets">3×12-15</div></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">05</div><div class="ex-info"><div class="ex-name">Dambıl Floor Press</div><div class="ex-meta">Yerde yatarak · Göğüs</div></div><div class="ex-sets">3×12-15</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li>Son sette yavaş tempo (eccentric)</li></ul></div></div></div>
+    <div class="simple-card"><div class="ex-num">06</div><div class="ex-info"><div class="superset-label">Süperset</div><div class="ex-name">Hammer Curl + Overhead Triceps Ext.</div></div><div class="ex-sets">3×10-15</div></div>
+    <div class="section-divider"><span>Finisher</span></div>
+    <div class="exercise-card" onclick="toggleCard(this)"><div class="exercise-header"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">Push-up Hold + Row Hold</div><div class="ex-meta">2-3 tur</div></div><div class="ex-sets">2-3 tur</div><div class="ex-chevron">▾</div></div><div class="exercise-body"><div class="exercise-detail"><ul class="detail-list"><li>Şınav alt pozisyon → 15 sn</li><li>TRX Row üst pozisyon → 15 sn</li></ul></div></div></div>
+  </div>
+
+  <div class="day-view" id="day-cum">
+    <div class="day-header"><div class="day-title">CUMA</div><span class="day-badge badge-lower">Alt Vücut + Core B</span></div>
+    <div class="stats-row"><div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Egzersiz</div></div><div class="stat-box"><div class="stat-val">18</div><div class="stat-label">Set</div></div><div class="stat-box"><div class="stat-val">+Core</div><div class="stat-label">Finisher</div></div></div>
+    <div class="simple-card"><div class="ex-num">01</div><div class="ex-info"><div class="ex-name">Dambıl Walking / Sabit Lunge</div><div class="ex-meta">Her bacak</div></div><div class="ex-sets">3×12-16</div></div>
+    <div class="simple-card"><div class="ex-num">02</div><div class="ex-info"><div class="ex-name">Sumo Squat</div><div class="ex-meta">İç uyluk + kalça</div></div><div class="ex-sets">3×15-20</div></div>
+    <div class="simple-card"><div class="ex-num">03</div><div class="ex-info"><div class="ex-name">Tek Bacak Romanian Deadlift</div><div class="ex-meta">Her bacak · Denge + kalça</div></div><div class="ex-sets">3×10-12/t</div></div>
+    <div class="simple-card"><div class="ex-num">04</div><div class="ex-info"><div class="ex-name">TRX Pistol Squat / Tek Bacak Otur-Kalk</div><div class="ex-meta">Her bacak</div></div><div class="ex-sets">3×8-10/t</div></div>
+    <div class="simple-card"><div class="ex-num">05</div><div class="ex-info"><div class="ex-name">Hip Thrust / Glute Bridge</div><div class="ex-meta">Kalça</div></div><div class="ex-sets">3×15-20</div></div>
+    <div class="simple-card"><div class="ex-num">06</div><div class="ex-info"><div class="ex-name">Calf Raise</div><div class="ex-meta">Baldır</div></div><div class="ex-sets">4×20+</div></div>
+    <div class="section-divider"><span>Core</span></div>
+    <div class="simple-card"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">Leg Raise</div></div><div class="ex-sets">3×10-15</div></div>
+    <div class="simple-card"><div class="ex-num">◈</div><div class="ex-info"><div class="ex-name">TRX Knee Tuck</div></div><div class="ex-sets">3×8-12</div></div>
+  </div>
+
+  <div class="day-view" id="day-cmt">
+    <div class="day-header"><div class="day-title">CUMARTESİ</div><span class="day-badge badge-full">Full Body Metabolik</span></div>
+    <div class="circuit-block"><div class="circuit-header"><h3>DEVRe 1</h3><span class="rounds">3 Tur · 60sn dinlen</span></div><div class="circuit-items"><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">Goblet Squat</div><div class="circuit-item-reps">×15</div></div><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">TRX Row</div><div class="circuit-item-reps">×12</div></div><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">Push-up</div><div class="circuit-item-reps">×10-15</div></div></div></div>
+    <div class="circuit-block"><div class="circuit-header"><h3>DEVRe 2</h3><span class="rounds">3 Tur · 60sn dinlen</span></div><div class="circuit-items"><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">Romanian Deadlift</div><div class="circuit-item-reps">×15</div></div><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">Shoulder Press</div><div class="circuit-item-reps">×12</div></div><div class="circuit-item"><div class="circuit-dot"></div><div class="circuit-item-text">TRX Hamstring Curl</div><div class="circuit-item-reps">×12</div></div></div></div>
+    <div class="section-divider"><span>Final Drop Finisher · 1 Tur</span></div>
+    <div class="circuit-block"><div class="circuit-header"><h3>FINAL</h3><span class="rounds">1 Tur · Dur-durma</span></div><div class="circuit-items"><div class="circuit-item"><div class="circuit-dot" style="background:var(--accent2)"></div><div class="circuit-item-text">Lateral Raise</div><div class="circuit-item-reps">×15</div></div><div class="circuit-item"><div class="circuit-dot" style="background:var(--accent2)"></div><div class="circuit-item-text">Hammer Curl</div><div class="circuit-item-reps">×12</div></div><div class="circuit-item"><div class="circuit-dot" style="background:var(--accent2)"></div><div class="circuit-item-text">Overhead Press</div><div class="circuit-item-reps">×10</div></div><div class="circuit-item"><div class="circuit-dot" style="background:var(--accent2)"></div><div class="circuit-item-text">Squat Hold</div><div class="circuit-item-reps">20sn</div></div><div class="circuit-item"><div class="circuit-dot" style="background:var(--accent2)"></div><div class="circuit-item-text">Plank</div><div class="circuit-item-reps">30sn</div></div></div><div class="circuit-rest">Amaç öldürmek değil, işi bitirmek.</div></div>
+  </div>
+</main>
+<script>
+  function showDay(id, btn) {
+    document.querySelectorAll('.day-view').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('day-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+  function toggleCard(card) { card.classList.toggle('open'); }
+</script>
+</body>
+</html>
 
